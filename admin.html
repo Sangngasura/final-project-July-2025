@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin — AgriMarket</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="navbar bg-white shadow-sm">
+    <div class="container">
+      <a class="navbar-brand text-success fw-bold" href="index.html">AgriMarket Admin</a>
+    </div>
+  </nav>
+
+  <main class="container my-5">
+    <h4>Admin Console</h4>
+
+    <div id="adminAuthArea" class="mb-4">
+      <div class="card p-3">
+        <div class="row g-2">
+          <div class="col-md-4"><input id="adminUser" class="form-control" placeholder="Username (admin)"></div>
+          <div class="col-md-4"><input id="adminPass" type="password" class="form-control" placeholder="Password (admin123)"></div>
+          <div class="col-md-4"><button id="adminLoginBtn" class="btn btn-primary">Login</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="adminPanel" style="display:none;">
+      <div class="row">
+        <div class="col-md-6">
+          <h6>Pending Posts</h6>
+          <div id="pendingPosts"></div>
+        </div>
+
+        <div class="col-md-6">
+          <h6>Marketplace (edit/remove)</h6>
+          <div id="marketPlace"></div>
+
+          <hr>
+          <h6>Orders</h6>
+          <div id="adminOrders"></div>
+
+          <hr>
+          <h6>Drivers</h6>
+          <div class="mb-2">
+            <input id="driverName" class="form-control mb-2" placeholder="Driver name">
+            <input id="driverPhone" class="form-control mb-2" placeholder="Phone">
+            <input id="driverVehicle" class="form-control mb-2" placeholder="Vehicle">
+            <button id="addDriverBtn" class="btn btn-primary mb-2">Add Driver</button>
+          </div>
+          <div id="driverList"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/app.js"></script>
+
+  <script>
+    // admin wiring
+    document.getElementById('adminLoginBtn').onclick = ()=>{
+      const u = document.getElementById('adminUser').value.trim();
+      const p = document.getElementById('adminPass').value.trim();
+      if(u==='admin' && p==='admin123'){ document.getElementById('adminAuthArea').style.display='none'; document.getElementById('adminPanel').style.display='block'; loadAdmin(); }
+      else alert('Invalid admin credentials');
+    };
+
+    function loadAdmin(){
+      renderPendingAdmin();
+      renderMarketAdmin();
+      renderOrdersAdmin();
+      renderDriversAdmin();
+    }
+
+    function renderPendingAdmin(){
+      const pending = JSON.parse(localStorage.getItem('pendingProducts')||'[]');
+      const el = document.getElementById('pendingPosts'); el.innerHTML = '';
+      if(pending.length===0) el.innerHTML = '<div class="small text-muted">No pending posts</div>';
+      pending.forEach(p=>{
+        el.innerHTML += `<div class="card p-2 mb-2">
+          <div><strong>${p.name}</strong> • KES ${p.price} • ${p.qty} ${p.unit}</div>
+          <div class="small text-muted">${p.location}</div>
+          <div class="mt-2">
+            <button class="btn btn-sm btn-success me-2" onclick="approvePending('${p.id}')">Approve</button>
+            <button class="btn btn-sm btn-danger" onclick="rejectPending('${p.id}')">Reject</button>
+          </div>
+        </div>`;
+      });
+    }
+
+    function renderMarketAdmin(){
+      const prods = getProducts();
+      const el = document.getElementById('marketPlace'); el.innerHTML = '';
+      if(!prods.length) el.innerHTML = '<div class="small text-muted">No items</div>';
+      prods.forEach((p,i)=>{
+        el.innerHTML += `<div class="card p-2 mb-2">
+          <div class="d-flex justify-content-between align-items-start">
+            <div><strong>${p.title}</strong><div class="small text-muted">KES ${p.price} • ${p.qty} ${p.unit}</div></div>
+            <div>
+              <button class="btn btn-sm btn-outline-primary me-2" onclick="editProduct(${i})">Edit</button>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${i})">Delete</button>
+            </div>
+          </div>
+        </div>`;
+      });
+    }
+
+    function renderOrdersAdmin(){
+      const orders = JSON.parse(localStorage.getItem('orders')||'[]');
+      const drivers = JSON.parse(localStorage.getItem('drivers')||'[]');
+      const el = document.getElementById('adminOrders'); el.innerHTML = '';
+      if(!orders.length) el.innerHTML = '<div class="small text-muted">No orders</div>';
+      orders.forEach((o, idx)=>{
+        const itemsHtml = (o.cart||[]).map(ci=>{
+          const p = getProducts().find(pp=>pp.id===ci.id) || { title:'Item' };
+          return `${p.title} x ${ci.qty} ${p.unit || ''}`;
+        }).join('<br>');
+        el.innerHTML += `<div class="card p-2 mb-2">
+          <div><strong>${o.user}</strong> • ${o.date}</div>
+          <div class="small">${itemsHtml}</div>
+          <div class="mt-2 small">Status: ${o.status || 'Pending'}</div>
+          <div class="mt-2">
+            <select id="driverSelect_${idx}" class="form-select form-select-sm mb-2">
+              <option value="">Assign driver</option>
+              ${drivers.map((d,di)=>`<option value="${di}">${d.name} — ${d.phone}</option>`).join('')}
+            </select>
+            <button class="btn btn-sm btn-primary" onclick="assignDriverToOrder(${idx})">Assign</button>
+          </div>
+        </div>`;
+      });
+    }
+
+    document.getElementById('addDriverBtn').onclick = ()=>{
+      const n = document.getElementById('driverName').value.trim();
+      const ph = document.getElementById('driverPhone').value.trim();
+      const v = document.getElementById('driverVehicle').value.trim();
+      if(!n||!ph||!v) return alert('Fill driver details');
+      const drivers = JSON.parse(localStorage.getItem('drivers')||'[]');
+      drivers.push({ name:n, phone:ph, vehicle:v });
+      localStorage.setItem('drivers', JSON.stringify(drivers));
+      document.getElementById('driverName').value=''; document.getElementById('driverPhone').value=''; document.getElementById('driverVehicle').value='';
+      renderDriversAdmin(); renderOrdersAdmin();
+    };
+
+    function renderDriversAdmin(){
+      const drivers = JSON.parse(localStorage.getItem('drivers')||'[]');
+      const el = document.getElementById('driverList'); el.innerHTML = '';
+      if(!drivers.length) el.innerHTML = '<div class="small text-muted">No drivers</div>';
+      drivers.forEach(d=> el.innerHTML += `<div class="card p-2 mb-2">${d.name} — ${d.phone} — ${d.vehicle}</div>`);
+    }
+
+    // expose helper renders for app.js changes
+    window.renderPendingAdmin = renderPendingAdmin;
+    window.renderMarketAdmin = renderMarketAdmin;
+    window.renderOrdersAdmin = renderOrdersAdmin;
+    window.renderDriversAdmin = renderDriversAdmin;
+  </script>
+</body>
+</html>

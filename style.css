@@ -1,0 +1,32 @@
+body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+
+.product-card { transition: transform .15s ease; border-radius:10px; overflow:hidden; }
+.product-card:hover { transform: translateY(-6px); }
+
+.cart-sidebar {
+  position: fixed;
+  top: 0;
+  right: -420px;
+  width: 400px;
+  height: 100%;
+  background: #fff;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.15);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  transition: right .28s ease;
+}
+.cart-sidebar.open { right: 0; }
+
+.cart-header { border-bottom: 1px solid rgba(255,255,255,0.08); }
+.cart-body { overflow-y: auto; flex: 1 1 auto; }
+
+.cart-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 1900; display: none;
+}
+.cart-overlay.show { display: block; }
+
+@media (max-width: 480px) {
+  .cart-sidebar { width: 100%; right: -100%; }
+  .cart-sidebar.open { right: 0; }
+}

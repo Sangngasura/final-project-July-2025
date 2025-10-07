@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Account — AgriMarket</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-light">
+  <nav class="navbar bg-white shadow-sm">
+    <div class="container">
+      <a class="navbar-brand text-success fw-bold" href="index.html">AgriMarket</a>
+      <button class="btn btn-outline-danger" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container my-5">
+    <h3>My Account</h3>
+
+    <ul class="nav nav-tabs mt-3" id="accountTabs">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile">Profile</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#shipping">Shipping</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#post">Post Product</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#orders">Orders</button></li>
+    </ul>
+
+    <div class="tab-content border border-top-0 p-4 bg-white shadow-sm">
+      <!-- Profile -->
+      <div class="tab-pane fade show active" id="profile">
+        <h5>Profile</h5>
+        <input id="editName" class="form-control mb-2" placeholder="Full name">
+        <input id="editEmail" class="form-control mb-2" placeholder="Email">
+        <input id="editPhone" class="form-control mb-2" placeholder="Phone">
+        <button id="saveProfileBtn" class="btn btn-success">Save profile</button>
+      </div>
+
+      <!-- Shipping -->
+      <div class="tab-pane fade" id="shipping">
+        <h5>Shipping addresses</h5>
+        <div id="addressList" class="row g-3 mb-3"></div>
+        <hr>
+        <h6>Add address</h6>
+        <div class="card p-3 shadow-sm">
+          <div class="row g-2">
+            <div class="col-md-6"><input id="addrName" class="form-control" placeholder="Full name"></div>
+            <div class="col-md-6"><input id="addrPhone" class="form-control" placeholder="Phone"></div>
+            <div class="col-md-6"><input id="addrCity" class="form-control" placeholder="City"></div>
+            <div class="col-md-6"><input id="addrLine" class="form-control" placeholder="Address"></div>
+          </div>
+          <button id="addAddressBtn" class="btn btn-success mt-3 w-100">Add address</button>
+        </div>
+      </div>
+
+      <!-- Post Product -->
+      <div class="tab-pane fade" id="post">
+        <h5>Post a product (sends for admin approval)</h5>
+        <input id="postItemName" class="form-control mb-2" placeholder="Product name">
+        <input id="postItemPrice" type="number" class="form-control mb-2" placeholder="Price (KES)">
+        <input id="postItemQty" type="number" class="form-control mb-2" placeholder="Quantity">
+        <select id="postItemUnit" class="form-select mb-2">
+          <option value="kg">kg</option>
+          <option value="sack">sack</option>
+          <option value="bag">bag</option>
+          <option value="crate">crate</option>
+          <option value="piece">piece</option>
+        </select>
+        <input id="postItemLocation" class="form-control mb-2" placeholder="Location">
+        <input id="postItemImageUrl" class="form-control mb-2" placeholder="Image URL (optional)">
+        <button id="postBtn" class="btn btn-primary">Submit for approval</button>
+      </div>
+
+      <!-- Orders -->
+      <div class="tab-pane fade" id="orders">
+        <h5>My Orders</h5>
+        <div id="orderList"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    // account page wiring
+    (function(){
+      const user = getCurrentUser();
+      if(!user){ window.location.href='login.html'; return; }
+
+      // fill profile
+      document.getElementById('editName').value = user.name || '';
+      document.getElementById('editEmail').value = user.email || '';
+      document.getElementById('editPhone').value = user.phone || '';
+
+      document.getElementById('saveProfileBtn').onclick = ()=>{
+        const users = getUsers();
+        const u = users.find(x=>x.email===user.email);
+        u.name = document.getElementById('editName').value.trim();
+        u.email = document.getElementById('editEmail').value.trim();
+        u.phone = document.getElementById('editPhone').value.trim();
+        saveUsers(users); setCurrentUser(u); alert('Profile saved');
+        renderUserNav();
+      };
+
+      // addresses
+      function renderAddresses(){
+        const users = getUsers();
+        const u = users.find(x=>x.email===user.email);
+        const list = document.getElementById('addressList');
+        list.innerHTML = '';
+        if(!u.addresses || u.addresses.length===0){
+          list.innerHTML = '<div class="col-12 small text-muted">No addresses yet.</div>';
+          return;
+        }
+        u.addresses.forEach((a,i)=>{
+          list.innerHTML += `<div class="col-md-6">
+            <div class="card p-3 shadow-sm">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h6 class="mb-1">${a.name}</h6>
+                  <div class="small text-muted">${a.city} - ${a.line}</div>
+                  <div class="small">${a.phone}</div>
+                </div>
+                <div class="text-end">
+                  <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteAddress(${i})">Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>`;
+        });
+      }
+      window.deleteAddress = function(i){
+        const users = getUsers();
+        const u = users.find(x=>x.email===user.email);
+        u.addresses.splice(i,1);
+        saveUsers(users); renderAddresses(); alert('Deleted');
+      };
+
+      document.getElementById('addAddressBtn').onclick = ()=>{
+        const name = document.getElementById('addrName').value.trim();
+        const phone = document.getElementById('addrPhone').value.trim();
+        const city = document.getElementById('addrCity').value.trim();
+        const line = document.getElementById('addrLine').value.trim();
+        if(!name||!phone||!city||!line) return alert('Fill all fields');
+        const users = getUsers();
+        const u = users.find(x=>x.email===user.email);
+        if(!u.addresses) u.addresses = [];
+        u.addresses.push({ name, phone, city, line });
+        saveUsers(users);
+        document.getElementById('addrName').value=''; document.getElementById('addrPhone').value=''; document.getElementById('addrCity').value=''; document.getElementById('addrLine').value='';
+        renderAddresses(); alert('Address added');
+      };
+
+      renderAddresses();
+
+      // post product
+      document.getElementById('postBtn').onclick = ()=>{
+        const name = document.getElementById('postItemName').value.trim();
+        const price = parseFloat(document.getElementById('postItemPrice').value);
+        const qty = parseFloat(document.getElementById('postItemQty').value);
+        const unit = document.getElementById('postItemUnit').value;
+        const location = document.getElementById('postItemLocation').value.trim();
+        const image = document.getElementById('postItemImageUrl').value.trim();
+        if(!name || !price || !qty || !unit) return alert('Fill name, price, qty, unit');
+        const pending = JSON.parse(localStorage.getItem('pendingProducts')||'[]');
+        pending.push({
+          id:'pending_'+Date.now(),
+          name, price, qty, unit, location, image, poster: user.email, status:'pending'
+        });
+        localStorage.setItem('pendingProducts', JSON.stringify(pending));
+        document.getElementById('postItemName').value=''; document.getElementById('postItemPrice').value=''; document.getElementById('postItemQty').value=''; document.getElementById('postItemLocation').value=''; document.getElementById('postItemImageUrl').value='';
+        alert('Product submitted for admin approval');
+      };
+
+      // orders
+      function renderOrders(){
+        const orders = JSON.parse(localStorage.getItem('orders')||'[]');
+        const my = orders.filter(o=>o.user===user.email);
+        const out = document.getElementById('orderList');
+        out.innerHTML = '';
+        if(my.length===0){ out.innerHTML = '<div class="small text-muted">No orders yet.</div>'; return; }
+        my.forEach(o=>{
+          const itemsHtml = (o.cart||[]).map(ci=>{
+            const p = getProducts().find(pp=>pp.id===ci.id) || { title:'Item' };
+            return `${p.title} x ${ci.qty} ${p.unit || ''}`;
+          }).join('<br>');
+          const drv = o.driver ? `<div class="small mt-2">Driver: ${o.driver.name} • ${o.driver.phone} • ${o.driver.vehicle}</div>` : '';
+          const receivedBtn = o.status === 'In Transit' ? `<button class="btn btn-sm btn-success mt-2" onclick="markReceived('${o.id}')">Mark Received</button>` : '';
+          out.innerHTML += `<div class="card p-3 mb-2">
+            <div><strong>Order</strong> • ${o.date}</div>
+            <div class="small text-muted">Status: ${o.status}</div>
+            <div class="mt-2">${itemsHtml}</div>
+            <div class="mt-2"><strong>Shipping:</strong> ${o.address ? (o.address.name + ', ' + o.address.city) : 'N/A'}</div>
+            ${drv}
+            ${receivedBtn}
+          </div>`;
+        });
+      }
+      window.markReceived = function(orderId){
+        let orders = JSON.parse(localStorage.getItem('orders')||'[]');
+        const idx = orders.findIndex(o=>o.id===orderId && o.user===user.email);
+        if(idx===-1) return alert('Order not found');
+        orders[idx].status = 'Delivered';
+        localStorage.setItem('orders', JSON.stringify(orders));
+        alert('Marked as received');
+        renderOrders();
+      };
+      renderOrders();
+    })();
+  </script>
+</body>
+</html>
