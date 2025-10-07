@@ -57,3 +57,80 @@ It provides a working prototype of a farm-to-market digital ecosystem with produ
 
 ## 📂 Folder Structure
 
+AgriMarket/
+│
+├── index.html # Homepage showing products
+├── login.html # Customer login page
+├── signup.html # Customer signup page
+├── account.html # Customer dashboard (profile, orders, post item)
+├── admin.html # Admin dashboard for approvals and management
+│
+├── css/
+│ └── style.css # Main stylesheet
+│
+├── js/
+│ └── app.js # Main application logic (login, cart, listings)
+│
+└── README.md # Project documentation
+
+
+---
+
+## 🧑‍💻 Getting Started
+
+### 1. Clone or Download
+```bash
+git clone https://github.com/yourusername/AgriMarket.git
+
+2. Open the Project
+cd AgriMarket
+
+3. Run
+
+Just open index.html in your browser — no server setup needed.
+
+🔐 Admin Login
+Username	Password
+admin	admin123
+🧠 Future Enhancements
+
+Add backend integration (Firebase or Node.js).
+
+Real-time M-Pesa payment API.
+
+Automated email/SMS order notifications.
+
+Google Maps integration for delivery tracking.
+
+Analytics dashboard for admins.
+
+📸 Demo Products
+Product	Sample Image
+Maize	🌽
+Wheat	🌾
+Tomatoes	🍅
+Peas	🟢
+Beans	🫘
+Kamande	🟤
+Potatoes	🥔
+Yellow Beans	🟡
+Rosecoco Beans	🔴
+Peanuts	🥜
+📜 License
+
+This project is open-source under the MIT License.
+You can modify and distribute it for educational or personal use.
+
+👨‍💻 Author
+
+Clement Kiptoo
+
+💬 “Empowering farmers through digital transformation.”
+
+❤️ Acknowledgment
+
+Developed as part of the Software Engineering Final-Year Project
+at the intersection of technology and sustainable agriculture.
+
+“Bridging the gap between farmers and markets through smart digital tools.”
+
