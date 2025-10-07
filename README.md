@@ -70,8 +70,7 @@ AgriMarket/
 │
 ├── js/
 │ └── app.js # Main application logic (login, cart, listings)
-│
-└── README.md # Project documentation
+
 
 
 ---
